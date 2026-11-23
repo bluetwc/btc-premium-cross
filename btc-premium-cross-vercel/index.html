@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BTC Premium Cross | Derive 옵션 가격이론</title>
+<style>
+*{box-sizing:border-box} body{margin:0;background:#0c1321;color:#e7eefb;font:15px/1.6 system-ui,sans-serif}main{max-width:1250px;margin:auto;padding:32px 20px}h1{font-size:clamp(25px,4vw,40px);margin:0}h2{font-size:19px;margin:0 0 8px}p{margin:4px 0 14px;color:#b5c5dc}.status{color:#64e2c5}section{border:1px solid #2c3c56;background:#131e30;border-radius:14px;padding:17px;margin-top:16px}.controls,.metrics{display:flex;flex-wrap:wrap;gap:16px}.metrics>*{flex:1 1 155px}.metric{background:#0c1728;border-radius:9px;padding:10px 13px;color:#bfcee3}.metric strong{display:block;color:#f5f9ff;font-size:21px}label{display:grid;gap:4px;color:#c8d6e9}select,input{width:150px;background:#0c1728;color:#fff;border:1px solid #526785;border-radius:8px;padding:8px;font:inherit} .scroll{overflow:auto}table{border-collapse:collapse;width:100%;white-space:nowrap;font-variant-numeric:tabular-nums}td,th{text-align:right;padding:8px 10px;border-bottom:1px solid #2c3c56}th{color:#c3d1e4}td:first-child,th:first-child{text-align:left}tr.atm{background:#213955}a{color:#64e2c5}summary{cursor:pointer;color:#b9cdf0}.muted{font-size:13px}small{display:block;color:#a7bbd9}
+.graph-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}.graph-top p{margin-bottom:4px}.chart-toggle{display:flex;align-items:center;gap:6px;white-space:nowrap}.chart-toggle input{width:auto}.legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin:12px 0;color:#c1cfe2;font-size:13px}.legend span{white-space:nowrap}.graph-scroll{overflow:auto}#premium-chart{display:block;width:100%;min-width:620px;height:auto}#premium-summary{font-variant-numeric:tabular-nums;color:#d9e7f8}.green{color:#34d399}.pink{color:#fb7185}.cyan{color:#2dd4bf}.orange{color:#fbbf24}
+</style>
+<main>
+<header><h1>BTC 옵션 가격이론</h1><p><a href="https://app.derive.xyz/trade/options?symbol=BTC">Derive BTC 옵션</a> · 공개 메인넷 시세</p><div class="status" id="status" role="status">연결 중</div></header>
+<section class="controls">
+<label>만기 (한국시간)<select id="expiry" aria-label="만기"></select></label>
+<label>가격이론 기준 행사가<select id="strike"><option value="">자동 · ATM</option></select></label>
+<label>시나리오 BTC 변동 (%)<input id="move" type="number" min="-99" max="300" value="0" step="0.5"></label>
+<label>시나리오 IV 변동 (%p)<input id="vol" type="number" min="-300" max="300" value="0" step="1"></label>
+<label>경과 시간 (시간)<input id="hours" type="number" min="0" value="0" step="1"></label>
+</section>
+<section aria-labelledby="premium-heading">
+<div class="graph-top"><div><h2 id="premium-heading">ATM 콜·풋 프리미엄 곡선</h2><p class="muted">등가 교차가 · 전일 고가·저가 · ½ 마디가</p></div><label class="chart-toggle"><input id="chart-demo" type="checkbox">예시 차트 보기</label></div>
+<div class="legend"><span class="green">━ 콜 프리미엄</span><span class="pink">━ 풋 프리미엄</span><span class="cyan">┄ 콜 전일고가 / ▲ 상향 돌파</span><span class="pink">┄ 풋 전일저가 / ▼ 하향 이탈</span><span class="orange">┄ ½ 마디가</span><span>◆ 콜·풋 교차</span></div>
+<div class="graph-scroll"><svg id="premium-chart" viewBox="0 0 960 370" role="img" aria-label="BTC 가격 시나리오별 콜·풋 프리미엄"></svg></div>
+<p id="premium-summary" class="muted"></p>
+<small>가로축은 시나리오 BTC 가격입니다. 상단 BTC 변동률 입력은 아래 가격 비교 카드에 적용됩니다. 콜·풋은 같은 만기와 고정 행사가를 사용합니다. ½ 마디가는 (콜 + 풋) ÷ 2이며, 전일 기준선은 한국시간 전일의 실제 체결가입니다.</small>
+</section>
+<section><h2>콜·풋 가격 비교</h2><div class="metrics" id="metrics"></div><p class="muted" id="caption"></p></section>
+<section><h2>옵션 체인</h2><div class="scroll"><table><thead><tr><th>행사가</th><th>콜 Bid</th><th>콜 Ask</th><th>콜 Mark</th><th>콜 IV</th><th>콜 OI</th><th>풋 Bid</th><th>풋 Ask</th><th>풋 Mark</th><th>풋 IV</th><th>풋 OI</th></tr></thead><tbody id="chain"></tbody></table></div></section>
+<section><details><summary>가격 계산 기준</summary><p>선택한 만기와 행사가의 동일한 콜·풋을 비교합니다. 교차가는 콜과 풋 프리미엄 차이입니다. 양쪽 호가가 있으면 중간가도 비교할 수 있습니다.</p><p>손익분기점은 롱 스트래들 만기 손익의 기준으로, 두 옵션의 Ask 합을 사용하며 수수료는 제외합니다. Black-76 시나리오는 Derive 포워드와 콜·풋 각 IV를 사용합니다. 시나리오에서는 포워드에 BTC 변동률을 적용하고, 할인율은 0%를 가정합니다. 교차와 프리미엄은 관찰 지표이며 방향 신호로 검증하는 작업은 별도로 필요합니다.</p></details></section>
+</main>
+<script src="premium-chart.js" defer></script>
+<script src="app.js" defer></script>
+</html>
